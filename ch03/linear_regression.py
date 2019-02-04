@@ -23,6 +23,16 @@ def main():
     plt.plot(truthX,truthY)
 
     plt.plot(X,Y,'o')
+
+    # 学習
+    Lambda_hat = learn_Lambda(XX,Lambda,lmd)
+    m_hat = learn_m(XX,Y,Lambda,Lambda_hat,lmd,m)
+
+    print("Lambda_hat = ")
+    print(Lambda_hat)
+    print("m_hat = ")
+    print(m_hat)
+
     plt.show()
 
 def mk(x,M):
@@ -32,9 +42,18 @@ def mk(x,M):
     return res
 
 def learn_Lambda(XX,Lambda,lmd):
-    return lmd * np.sum(dot(XX,XX)) + Lambda
+    res = np.array([])
+    for i in range(XX.shape[0]):
+        res = np.append(res, dot(XX[i],XX[i]))
+    return lmd * np.sum(res) + Lambda
 
-def learn_m(XX,Y,)
+def learn_m(XX,Y,Lambda,Lambda_hat,lmd,m):
+    ynxn = np.array([])
+    for i in range(XX.shape[0]):
+        ynxn = np.append(ynxn, np.dot(Y[i],XX[i]))
+    sigma = sum(ynxn)
+    tmp = np.dot(lmd, (sigma + np.dot(Lambda, m)))
+    return np.dot(np.linalg.inv(Lambda_hat), tmp)
 
 def dot(v,w):
     v = v.reshape([1,-1])
