@@ -9,7 +9,7 @@ def main():
 
     M = 5      # パラメータ数
     N = 30      # 訓練データ数
-    lmd = 1   # λ,精度パラメータ
+    lmd = 3   # λ,精度パラメータ
     m = np.random.randn(M).T * 0.01  # 平均パラメータ
     Lambda = np.random.randn(M,M).T * 0.01 # 共分散行列の逆行列
 
