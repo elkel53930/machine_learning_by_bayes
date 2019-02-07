@@ -7,22 +7,20 @@ import math
 def main():
     np.random.seed(1234)
 
-    M = 5      # パラメータ数
-    N = 30      # 訓練データ数
+    M = 5     # パラメータ数
+    N = 30    # 訓練データ数
     lmd = 3   # λ,精度パラメータ
     m = np.random.randn(M).T * 0.01  # 平均パラメータ
     Lambda = np.random.randn(M,M).T * 0.01 # 共分散行列の逆行列
 
-    # 学習データ 三角関数＋ノイズ f(x) = sin x + ε_n
-    X = np.random.rand(N)*6.28
-    XX = mk(X,M).reshape([-1,N]).T
-    Y = np.sin(X) + np.random.randn(N)*0.1
-
-    # 三角関数
-    truthX = np.arange(min(X)-0.5,max(X)+0.5,0.01)
+    truthX = np.arange(-0.5,np.pi * 2 + 0.5,0.01)
     truthY = np.sin(truthX)
     plt.plot(truthX,truthY,label="sin(x)")
 
+    # 学習データ 三角関数＋ノイズ f(x) = sin x + ε_n
+    X = np.random.rand(N) * 2 * np.pi
+    XX = mk(X,M).reshape([-1,N]).T
+    Y = np.sin(X) + np.random.randn(N)*0.1
     plt.plot(X,Y,'o',label="train data")
 
     # 学習
@@ -33,11 +31,7 @@ def main():
     inv_lmd_aster = np.array([])
     for i in range(truthX.shape[0]):
         mu_aster = np.append(mu_aster,calc_mu_aster(m_hat,truthX[i]))
-#        import pdb; pdb.set_trace()
         inv_lmd_aster = np.append(inv_lmd_aster,calc_inv_lmd_aster(Lambda_hat,lmd,truthX[i],M))
-
-    print(mu_aster.shape)
-    print(inv_lmd_aster.shape)
 
     plt.plot(truthX,mu_aster,label="pred mean")
     plt.plot(truthX,mu_aster+np.sqrt(inv_lmd_aster),label="pred devi+")
@@ -54,7 +48,7 @@ def mk(x,M):
 def learn_Lambda(XX,Lambda,lmd):
     xnxn = np.zeros((XX.shape[1],XX.shape[1],))
     for i in range(XX.shape[0]):
-        xnxn = xnxn + dot(XX[i],XX[i])
+        xnxn = xnxn + square_v(XX[i])
     return lmd * xnxn + Lambda
 
 def learn_m(XX,Y,Lambda,Lambda_hat,lmd,m):
@@ -72,10 +66,9 @@ def calc_inv_lmd_aster(Lambda_hat,lmd,x_aster,M):
     xx_aster = mk(x_aster,M)
     return lmd**(-1) + np.dot(np.dot(xx_aster, np.linalg.inv(Lambda_hat)),xx_aster.T)
 
-def dot(v,w):
-    v = v.reshape([1,-1])
-    w = w.reshape([1,-1])
-    return np.dot(v.T,w)
+def square_v(x):
+    x = x.reshape([1,-1])
+    return np.dot(x.T,x)
 
 if __name__ == "__main__":
     main()
