@@ -7,7 +7,7 @@ import numpy as np
 
 K = 3
 N = 100
-ITERMAX = 1000
+ITERMAX = 200
 X = []
 a = 1
 b = 1
@@ -17,7 +17,7 @@ truth_s = []
 def main():
     X = generate_data()
 
-    ## λとπをランダムに初期化
+    # initialize lambda and pi
     lambda_sample = np.random.rand(K)
     pi_sample = np.random.rand(K)
     pi_sample = pi_sample / np.sum(pi_sample)
@@ -27,41 +27,44 @@ def main():
     pi_samples = np.zeros(K) # shape == (ITERMAX, K)
 
     for iter in range(ITERMAX):
-        # sをサンプル
         s_sample = np.array([])
         for i in range(N):
             s_sample = np.append(s_sample, sampling_s_n(X[i],lambda_sample,pi_sample))
 
-        # λをサンプル
         lambda_sample = np.array([])
         for k in range(K):
             lambda_sample = np.append(lambda_sample, sampling_lambda_k(X,s_sample,k))
 
-        # πをサンプル
         pi_sample = sampling_pi(s_sample)
 
         s_samples = np.vstack((s_samples, s_sample))
         pi_samples = np.vstack((pi_samples, pi_sample))
         lambda_samples = np.vstack((lambda_samples, lambda_sample))
 
-        if iter % 10 == 0:
-            print(iter)
+        if iter % 50 == 0:
+            print("iter = " + str(iter))
+            print("estimated lambda = " + str(calc_estimated_lambda(lambda_samples,int(iter/4))))
 
-#    s_samples = np.delete(s_samples,0,0)
-    s_samples = np.delete(s_samples,slice(int(s_samples.shape[0] / 10)),0)
+    estimated_lambda = calc_estimated_lambda(lambda_samples,int(ITERMAX/4))
+    s_samples = np.delete(s_samples,slice(int(ITERMAX/4)),0)
+    table = np.argsort(estimated_lambda)
+    for i in range(len(truth_s)):
+        truth_s[i] = table[truth_s[i]]
 
     s_mean = np.mean(s_samples,axis = 0)
-    print(s_samples.shape)
+    print(truth_s)
     print(s_mean)
     print("acc = " + str(np.sum(np.abs(s_mean-truth_s))))
 
+#    plt.hist(X,range=(0,60),bins = 61)
+#    plt.show()
 
-    plt.hist(X,range=(0,60),bins = 61)
-    plt.show()
+def calc_estimated_lambda(lambdas, ignore):
+    return np.mean(np.delete(lambdas,slice(ignore),0),axis=0)
 
 def generate_data():
     v_k = np.arange(K)
-    p_k = (0.4,0.4,0.2)
+    p_k = (0.2,0.4,0.4)
     lambda_k = (2,18,50)
     cat = rv_discrete(name='cat', values=(v_k,p_k))
 
@@ -79,7 +82,6 @@ def sampling_s_n(x_n, Lambda, Pi):
     eta_n = np.array([])
     for k in range(K):
         eta_n = np.append(eta_n,calc_eta_n_k(x_n, Lambda[k], Pi[k]))
-    v_k = np.arange(K)
     eta_n = eta_n / np.sum(eta_n)
     v_k = np.arange(K)
     cat = rv_discrete(name='cat', values=(v_k,eta_n))
@@ -94,7 +96,7 @@ def calc_b_k_hat(s, k):
 def sampling_lambda_k(X, s, k):
     a_k_hat = calc_a_k_hat(X,s,k)
     b_k_hat = calc_b_k_hat(s,k)
-    return gamma.rvs(a_k_hat, scale = b_k_hat)
+    return gamma.rvs(a_k_hat, scale = 1/b_k_hat)
 
 def calc_alpha_k_hat(s, k):
     return np.sum(s==k) + Alpha[k]
